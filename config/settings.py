@@ -79,8 +79,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'your_db_name',
+        'USER': 'your_db_user',
+        'PASSWORD': 'your_db_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -116,11 +120,39 @@ USE_I18N = True
 USE_TZ = True
 
 import os
+from pathlib import Path
 
+# Убедитесь, что BASE_DIR определен в начале файла
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # collectstatic соберёт сюда
+# --- НАСТРОЙКИ БАЗЫ ДАННЫХ ---
+# Данные берутся из docker-compose.yml через переменные окружения
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
+    }
+}
+
+# --- НАСТРОЙКИ СТАТИЧЕСКИХ ФАЙЛОВ ---
+# Это исправит ошибку ImproperlyConfigured
+STATIC_URL = "static/"
+
+# Папка, куда collectstatic соберет все файлы для Gunicorn
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Если у вас есть папка static в корне проекта (рядом с manage.py)
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
 
+# Настройка для загруженных пользователем файлов (опционально, но полезно)
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# По умолчанию для новых моделей (избавляет от WARNING в логах)
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
